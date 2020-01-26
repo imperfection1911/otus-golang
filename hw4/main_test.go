@@ -34,6 +34,7 @@ func TestItem_Prev(t *testing.T) {
 
 func TestList_Len(t *testing.T) {
 	l := &List{}
+	l.GenerateID()
 	l.PushFront("A")
 	l.PushFront("B")
 	l.PushFront("C")
@@ -48,6 +49,7 @@ func TestList_Len(t *testing.T) {
 
 func TestList_PushBack(t *testing.T) {
 	l := &List{}
+	l.GenerateID()
 	l.PushFront("A")
 	l.PushFront("B")
 	l.PushFront("C")
@@ -59,6 +61,7 @@ func TestList_PushBack(t *testing.T) {
 
 func TestList_PushFront(t *testing.T) {
 	l := &List{}
+	l.GenerateID()
 	l.PushBack("A")
 	l.PushBack("B")
 	l.PushBack("C")
@@ -70,12 +73,36 @@ func TestList_PushFront(t *testing.T) {
 
 func TestList_Remove(t *testing.T) {
 	l := &List{}
+	l.GenerateID()
 	l.PushBack("A")
 	l.PushBack("B")
 	l.PushBack("C")
 	l.PushFront("D")
-	l.Remove(l.first)
+	_, err := l.Remove(l.first)
+	if err != nil {
+		t.Fatalf("%#v", err)
+	}
 	if l.first.value != "A" {
 		t.Fatalf("%#v", l.first)
+	}
+}
+
+func TestList_Remove_deleted(t *testing.T) {
+	l := &List{}
+	l.GenerateID()
+	i := &Item{value: "A", deleted: true}
+	_, err := l.Remove(i)
+	if err == nil {
+		t.Fatalf("%#v", err)
+	}
+}
+
+func TestList_Remove_another(t *testing.T) {
+	l := &List{}
+	l.GenerateID()
+	i := &Item{value: "A", listID: "1qaz2wsx"}
+	_, err := l.Remove(i)
+	if err == nil {
+		t.Fatalf("%#v", err)
 	}
 }

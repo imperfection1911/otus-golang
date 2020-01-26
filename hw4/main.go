@@ -1,13 +1,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/google/uuid"
 )
 
 //Item of the double linked list
 type Item struct {
 	value      interface{}
 	next, prev *Item
+	listID     string
+	deleted    bool
 }
 
 // Value returns Item value attribute.
@@ -25,13 +29,24 @@ func (i Item) Prev() *Item {
 	return i.prev
 }
 
-// Не понимаю необходимости реализации 3 метордов выше, если всегда могу получить value как item.value например. :(
+// Не понимаю необходимости реализации 3 методов выше, если всегда могу получить value как item.value например. :(
 
 //List struct of dll
 type List struct {
 	first *Item
 	last  *Item
 	len   int
+	id    string
+}
+
+// GenerateID golint is annoying
+func (l List) GenerateID() {
+	// генерация id списка.
+	id, err := uuid.NewUUID()
+	if err != nil {
+		fmt.Println("error while generating uid")
+	}
+	l.id = id.String()
 }
 
 //Len returns list len
@@ -51,7 +66,7 @@ func (l List) Last() *Item {
 
 //PushBack push Item in the end of list
 func (l *List) PushBack(value interface{}) {
-	item := &Item{value: value}
+	item := &Item{value: value, listID: l.id}
 	if l.last == nil {
 		l.last = item
 		if l.first != nil {
@@ -69,7 +84,7 @@ func (l *List) PushBack(value interface{}) {
 
 //PushFront push item in fron of list
 func (l *List) PushFront(value interface{}) {
-	item := &Item{value: value}
+	item := &Item{value: value, listID: l.id}
 	if l.first == nil {
 		l.first = item
 		if l.last != nil {
@@ -86,33 +101,45 @@ func (l *List) PushFront(value interface{}) {
 }
 
 //Remove suddenly removes item friom list
-func (l *List) Remove(item *Item) {
-	if item.prev != nil {
-		previous := item.prev
-		previous.next = item.next
+func (l *List) Remove(item *Item) (bool, error) {
+	result := false
+	var err error
+	if item.listID == l.id && !item.deleted {
+		if item.prev != nil {
+			previous := item.prev
+			previous.next = item.next
+		}
+		if item.next != nil {
+			next := item.next
+			next.prev = item.prev
+		}
+		if l.first == item {
+			l.first = item.next
+		}
+		if l.last == item {
+			l.last = item.prev
+		}
+		l.len--
+		result = true
+	} else {
+		err = errors.New("item is from another list or have been already deleted")
 	}
-	if item.next != nil {
-		next := item.next
-		next.prev = item.prev
-	}
-	if l.first == item {
-		l.first = item.next
-	}
-	if l.last == item {
-		l.last = item.prev
-	}
-	l.len--
+	return result, err
 }
 
 func main() {
 	l := new(List)
+	l.GenerateID()
 	l.PushBack("A")
 	l.PushFront("B")
 	l.PushBack("C")
 	fmt.Printf("%#v\n", l.last)
 	// вот тоже не до конца понял. Remove ждет указатель, но если передать l.last как &l.last не компилируется.
 	// Понимаю что l.last уже указатель, но забыл как проверить тип переменной:( Легко запутаться
-	l.Remove(l.last)
+	_, err := l.Remove(l.last)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Printf("%#v\n", l.last)
 	//fmt.Printf("%+v\n", l)
 }
