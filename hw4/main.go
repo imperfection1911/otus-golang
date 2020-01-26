@@ -120,6 +120,7 @@ func (l *List) Remove(item *Item) (bool, error) {
 			l.last = item.prev
 		}
 		l.len--
+		item.deleted = true
 		result = true
 	} else {
 		err = errors.New("item is from another list or have been already deleted")
